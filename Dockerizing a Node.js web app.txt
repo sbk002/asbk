@@ -1,0 +1,143 @@
+https://nodejs.org/en/docs/guides/nodejs-docker-webapp/ 
+
+
+#mkdir -p /var/tmp/dkr
+#cd /var/tmp/dkr
+#vi  package.json 
+{
+  "name": "docker_web_app",
+  "version": "1.0.0",
+  "description": "Node.js on Docker",
+  "author": "sbk002@outlook.com",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.16.1"
+  }
+}
+
+#vi server.js 
+'use strict';
+
+const express = require('express');
+
+// Constants
+const PORT = 8080;
+const HOST = '0.0.0.0';
+
+// App
+const app = express();
+app.get('/', (req, res) => {
+  res.send('Hello World');
+});
+
+app.listen(PORT, HOST);
+console.log(`Running on http://${HOST}:${PORT}`);
+
+
+# touch Dockerfile
+# vi Dockerfile
+FROM node:12
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Install app dependencies
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
+# where available (npm@5+)
+COPY package*.json ./
+
+RUN npm install
+# If you are building your code for production
+# RUN npm ci --only=production
+
+# Bundle app source
+COPY . .
+
+EXPOSE 8080
+CMD [ "node", "server.js" ]
+
+#
+# vi .dockerignore
+node_modules
+npm-debug.log
+
+
+# docker build -t <your username>/node-web-app .
+# docker build -t bala/node-web-app .
+Sending build context to Docker daemon  5.12 kB
+Step 1/7 : FROM node:12
+Trying to pull repository registry.access.redhat.com/node ...
+Pulling repository registry.access.redhat.com/node
+Trying to pull repository registry.redhat.io/node ...
+Trying to pull repository docker.io/library/node ...
+12: Pulling from docker.io/library/node
+419e7ae5bb1e: Pull complete
+848839e0cd3b: Pull complete
+de30e8b35015: Pull complete
+258fdea6ea48: Pull complete
+ca1b0e608d7b: Pull complete
+dd8cac1f0c02: Pull complete
+58b5f73365e0: Pull complete
+592abe73e7e7: Pull complete
+ce371731a439: Pull complete
+Digest: sha256:099346a8e9c861b406c9bbb1f109125c7263868e5447cc57d6d564e1fec8a5cf
+Status: Downloaded newer image for docker.io/node:12
+ ---> 45bd1e0ed0c2
+Step 2/7 : WORKDIR /usr/src/app
+ ---> fd71e980fbaa
+Removing intermediate container 12a395c28a01
+Step 3/7 : COPY package*.json ./
+ ---> cacbef13a32e
+Removing intermediate container 9fcff3a9f217
+Step 4/7 : RUN npm install
+ ---> Running in 0ab36ebc208c
+
+npm notice created a lockfile as package-lock.json. You should commit this file.
+npm WARN docker_web_app@1.0.0 No repository field.
+npm WARN docker_web_app@1.0.0 No license field.
+
+added 50 packages from 37 contributors and audited 50 packages in 7.277s
+found 0 vulnerabilities
+
+ ---> e6a544db7e05
+Removing intermediate container 0ab36ebc208c
+Step 5/7 : COPY . .
+ ---> 10c4e907bb3e
+Removing intermediate container 2e2738990784
+Step 6/7 : EXPOSE 8080
+ ---> Running in 01d80ad9ec73
+ ---> 0172844c2575
+Removing intermediate container 01d80ad9ec73
+Step 7/7 : CMD node server.js
+ ---> Running in 60ebde559cd5
+ ---> 6977a9d008b7
+Removing intermediate container 60ebde559cd5
+Successfully built 6977a9d008b7
+
+# docker images
+REPOSITORY                        TAG                 IMAGE ID            CREATED             SIZE
+bala/node-web-app                 latest              6977a9d008b7        24 seconds ago      922 MB
+docker.io/node                    12                  45bd1e0ed0c2        5 days ago          919 MB
+k8s.gcr.io/kube-proxy             v1.18.5             a1daed4e2b60        2 months ago        117 MB
+docker.io/weaveworks/weave-npc    2.6.5               420d4d5aac6f        2 months ago        36.8 MB
+docker.io/weaveworks/weave-kube   2.6.5               e9dd2f85e51b        2 months ago        123 MB
+k8s.gcr.io/pause                  3.2                 80d28bedfe5d        6 months ago        683 kB
+
+# docker run -p 49160:8080 bala/node-web-app
+Running on http://0.0.0.0:8080
+#
+# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                     NAMES
+a7b295ec7650        bala/node-web-app   "docker-entrypoint..."   51 minutes ago      Up 51 minutes       0.0.0.0:49160->8080/tcp   fervent_dubinsky
+#
+
+Now open the browser and check this URL..
+
+http://192.168.56.30:49160/
+or
+# curl http://192.168.56.30:49160
+Hello World
+#
